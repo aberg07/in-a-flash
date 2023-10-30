@@ -13,6 +13,7 @@ const deck1Button = document.getElementById('deck-1');
 deck1Button.addEventListener('click', function() {
     switchDecks(this.name);
 });
+deck1Button.classList.add('open');
 const list = document.getElementById('list-container');
 const deleteButton = document.getElementById('delete-button');
 deleteButton.addEventListener('click', () => deleteList());
@@ -138,6 +139,7 @@ function makeNewDeck() {
     deckCollection.push([]);
     newTab.innerText = "Deck " + deckCollection.length;
     newTab.id = "deck-" + deckCollection.length;
+    newTab.classList.add('tab');
     newTab.name = deckCollection.length;
     newTab.addEventListener('click', function() {
         switchDecks(this.name);
@@ -146,7 +148,9 @@ function makeNewDeck() {
 }
 
 function switchDecks(deckId) {
+    tabs.children[deckIndex].classList.remove('open');
     deckIndex = deckId-1;
+    tabs.children[deckIndex].classList.add('open');
     updateList();
 }
 

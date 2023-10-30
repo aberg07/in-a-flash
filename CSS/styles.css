@@ -91,6 +91,26 @@ h1, h3 {
     display: flex;
 }
 
+#tabs .tab {
+    cursor: pointer;
+    border-top: 1px solid black;
+    border-left: 1px solid black;
+    border-right: 1px solid black;
+    border-bottom: 1px solid black;
+}
+
+#tabs .tab:hover {
+    background-color: #575551;
+}
+
+#tabs .tab.open {
+    border-top: 1px solid black;
+    border-left: 1px solid black;
+    border-right: 1px solid black;
+    border-bottom: 0;
+    background-color: beige;
+}
+
 #list-container {
     width: 40%;
     height: 20%;
