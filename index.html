@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./CSS/styles.css">
+    <title>Flashcards</title>
+</head>
+<body>
+    <h1>Flashcard App</h1>
+    <div id='container'>
+        <button type="button" id="back-button">&lt;</button>
+        <div id="card">
+            <p id="question"></p>
+        </div>
+        <button type="button" id="next-button">&gt;</button>
+    </div>
+    <div id="input-container">
+        <form id="card-maker">
+            <label for="front-text">Front Text</label>
+            <input type="text" id="front-text">
+            <label for="back-text">Back Text</label>
+            <input type="text" id="back-text">
+            <button type="button" id="submit-button">Add card</button>
+        </form>
+    </div>
+    <h3>Current cards</h3>
+    <div id="tabs">
+        <button class="tab">Deck 1</button>
+    </div>
+    <div id="list-container">
+    </div>
+    <button type="button" id="delete-button">Delete checked cards</button>
+    <button type="button" id='shuffle-button'>Shuffle deck</button>
+    <button type='button' id="new-deck-button">Create new deck</button>
+    <script src="./Scripts/script.js"></script>
+</body>
+</html>
