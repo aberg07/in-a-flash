@@ -123,6 +123,9 @@ h1, h3 {
     align-items: center;
     justify-items: center;
     row-gap: 0.5rem;
+    border-bottom: 1px solid black;
+    border-left: 1px solid black;
+    border-right: 1px solid black;
 }
 
 #list-container p {
@@ -144,6 +147,11 @@ h1, h3 {
 }
 
 #new-deck-button {
+    display: block;
+    margin: 0.5rem auto;
+}
+
+#delete-deck-button {
     display: block;
     margin: 0.5rem auto;
 }

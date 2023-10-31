@@ -9,11 +9,7 @@ const frontText = document.getElementById('front-text');
 const backText = document.getElementById('back-text');
 const submitButton = document.getElementById('submit-button');
 submitButton.addEventListener('click', () => addCard())
-const deck1Button = document.getElementById('deck-1');
-deck1Button.addEventListener('click', function() {
-    switchDecks(this.name);
-});
-deck1Button.classList.add('open');
+const tabs = document.getElementById('tabs');
 const list = document.getElementById('list-container');
 const deleteButton = document.getElementById('delete-button');
 deleteButton.addEventListener('click', () => deleteList());
@@ -21,11 +17,16 @@ const shuffleButton = document.getElementById('shuffle-button');
 shuffleButton.addEventListener('click', () => shuffle());
 const newDeckButton = document.getElementById('new-deck-button');
 newDeckButton.addEventListener('click', () => makeNewDeck());
+const deleteDeckButton = document.getElementById('delete-deck-button');
+deleteDeckButton.addEventListener('click', () => deleteDeck());
 
 const storedCards = localStorage.getItem('deck');
+const storedDecks = localStorage.getItem('deckCollection');
+
 let deck = JSON.parse(storedCards);
+let deckCollection = JSON.parse(storedDecks)
 if (JSON.parse(storedCards) === null) deck = [];
-deckCollection = [deck];
+//deckCollection = [deck];
 let noCards = {'question' : 'There are currently no cards in your deck. Add one now!',
                 'answer' : 'There are currently no cards in your deck. Add one now!'}
 let index = 0;
@@ -96,6 +97,7 @@ function addCard() {
         if (deckCollection[deckIndex].length === 1) next();
     }
     localStorage.setItem('deck', JSON.stringify(deck));
+    localStorage.setItem('deckCollection', JSON.stringify(deckCollection));
 }
 
 function deleteList() {
@@ -116,12 +118,26 @@ function deleteList() {
     updateList();
     if (deckCollection[deckIndex].length === 0) flip();
     localStorage.setItem('deck', JSON.stringify(deck));
+    localStorage.setItem('deckCollection', JSON.stringify(deckCollection));
+}
+
+function deleteDeck() {
+    if (deckCollection.length-1 === 0) {
+        alert('You cannot delete your only deck.');
+    }
+    else {
+        deckCollection.splice(deckIndex, 1);
+        deckIndex = 0;
+        updateList();
+    }
+    localStorage.setItem('deck', JSON.stringify(deck));
+    localStorage.setItem('deckCollection', JSON.stringify(deckCollection));
 }
 
 function shuffle() {
     if (deckCollection[deckIndex].length === 0) return;
     else {
-        for (let i = deck.length - 1; i > 0; i--) {
+        for (let i = deckCollection[deckIndex].length - 1; i > 0; i--) {
             // Generate a random index between 0 and i
             const randomIndex = Math.floor(Math.random() * (i + 1));
             // Swap elements at randomIndex and i
@@ -131,10 +147,11 @@ function shuffle() {
         content.innerText = deckCollection[deckIndex][index].question;
         updateList();
     }
+        localStorage.setItem('deck', JSON.stringify(deck));
+        localStorage.setItem('deckCollection', JSON.stringify(deckCollection));
 }
 
 function makeNewDeck() {
-    tabs = document.getElementById('tabs');
     newTab = document.createElement('button');
     deckCollection.push([]);
     newTab.innerText = "Deck " + deckCollection.length;
@@ -145,21 +162,49 @@ function makeNewDeck() {
         switchDecks(this.name);
     });
     tabs.appendChild(newTab);
+    localStorage.setItem('deckCollection', JSON.stringify(deckCollection));
 }
 
 function switchDecks(deckId) {
     tabs.children[deckIndex].classList.remove('open');
     deckIndex = deckId-1;
     tabs.children[deckIndex].classList.add('open');
+    content = card.children[0];
+    content.id = 'question';
+    if (deckCollection[deckIndex].length === 0) {
+        content.innerText = noCards.question;
+    }
+    else if (index > deckCollection[deckIndex].length-1) {
+        content.innerText = deckCollection[deckIndex][0].question;
+        index = 0;
+    }
+    else {
+        content.innerText = deckCollection[deckIndex][index].question;
+    }
     updateList();
 }
 
 function updateList() {
+    decks = tabs.getElementsByClassName('tab');
+    while (decks.length > 0) {
+        decks[0].remove();
+    }
     questions = list.getElementsByTagName('input');
     labels = list.getElementsByTagName('label');
     while (questions.length > 0) {
         questions[0].remove();
         labels[0].remove();
+    }
+    for (let i = 0; i < deckCollection.length; i++) {
+        deckTab = document.createElement('button');
+        deckTab.classList.add('tab');
+        deckTab.id = 'deck-'+ (i+1);
+        deckTab.name = (i+1);
+        deckTab.innerText = 'Deck ' + deckTab.name;
+        deckTab.addEventListener('click', function() {
+            switchDecks(this.name);
+        });
+        tabs.appendChild(deckTab);
     }
     for (let i = 0; i < deckCollection[deckIndex].length; i++) {
         listQuestion = document.createElement('input');
@@ -174,4 +219,5 @@ function updateList() {
         list.appendChild(listQuestion);
         list.appendChild(listQuestionLabel);
     }
+    tabs.children[deckIndex].classList.add('open');
 }
