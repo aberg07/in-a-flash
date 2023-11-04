@@ -7,33 +7,130 @@
     <title>Flashcards</title>
 </head>
 <body>
+    <div id="app">
     <h1>Flashcard App</h1>
     <div id='container'>
-        <button type="button" id="back-button">&lt;</button>
-        <div id="card">
-            <p id="question"></p>
+        <button type="button" id="back-button" v-on:click="back()">&lt;</button>
+        <div id="card" v-on:click="flip()">
+            <p v-if="deckCollection[deckIndex].length == 0">{{ noCards.question }}</p>
+            <p v-else-if="cardSide == 'question'">{{ deckCollection[deckIndex][index].question }}</p>
+            <p v-else-if="cardSide == 'answer'">{{ deckCollection[deckIndex][index].answer }}</p>
         </div>
-        <button type="button" id="next-button">&gt;</button>
+        <button type="button" id="next-button" v-on:click="next()">&gt;</button>
     </div>
     <div id="input-container">
-        <form id="card-maker">
+        <form id="card-maker" v-on:submit.prevent="addCard()">
             <label for="front-text">Front Text</label>
-            <input type="text" id="front-text">
+            <input type="text" id="front-text" v-model="frontText">
             <label for="back-text">Back Text</label>
-            <input type="text" id="back-text">
-            <button type="button" id="submit-button">Add card</button>
+            <input type="text" id="back-text" v-model="backText">
+            <button type="submit" id="submit-button">Add card</button>
         </form>
     </div>
-    <h3>Current cards</h3>
+    <h3>Deck {{ deckIndex+1 }}</h3>
     <div id="tabs">
-
+        <button v-for="(i, index) in deckCollection" class="tab" :key="index" v-on:click="switchDecks(index)" :class="{'open': openButtonIndex == index}">Deck {{ index+1 }}</button>
     </div>
     <div id="list-container">
+        <template v-for="(i, index) in deckCollection[deckIndex]" :key ='index'>
+            <input type="checkbox"></input>
+            <p>{{ i.question }}</p>
+        </template>
     </div>
-    <button type="button" id="delete-button">Delete checked cards</button>
-    <button type="button" id='shuffle-button'>Shuffle deck</button>
-    <button type='button' id="new-deck-button">Create new deck</button>
-    <button type="button" id="delete-deck-button">Delete current deck</button>
-    <script src="./Scripts/script.js"></script>
+    <button type="button" id="delete-button" v-on:click="deleteChecked()">Delete checked cards</button>
+    <button type="button" id='shuffle-button' v-on:click="shuffle()">Shuffle deck</button>
+    <button type='button' id="new-deck-button" v-on:click="addDeck()">Create new deck</button>
+    <button type="button" id="delete-deck-button" @click="deleteDeck()">Delete current deck</button>
+    </div>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script>
+        const app = Vue.createApp({
+            data() {
+                return {
+                    cardSide: 'question',
+                    index: 0,
+                    deckIndex: 0,
+                    openButtonIndex: 0,
+                    deckCollection: JSON.parse(localStorage.getItem('deckCollection')) || [[]],
+                    noCards: {'question': 'There are currently no cards in your deck. Add one now!', 'answer': 'There are currently no cards in your deck. Add one now!'},
+                    frontText: '',
+                    backText: ''
+                }
+            },
+            methods: {
+                flip() {
+                    if (this.cardSide === 'answer') this.cardSide = 'question';
+                    else if (this.cardSide === 'question') this.cardSide = 'answer';
+                },
+                next() {
+                    this.index++;
+                    if (this.index >= this.deckCollection[this.deckIndex].length) this.index = 0;
+                    this.cardSide = 'question';
+                },
+                back() {
+                    this.index--;
+                    if (this.index < 0) this.index = this.deckCollection[deckIndex].length-1;
+                    if (this.deckCollection[this.deckIndex].length == 0) this.index = 0;
+                    this.cardSide = 'question';
+                },
+                switchDecks(newDeckIndex) {
+                    this.deckIndex = newDeckIndex;
+                    this.openButtonIndex = newDeckIndex;
+                    this.index = 0;
+                },
+                addCard() {
+                    if (this.frontText == '' || this.backText == '') alert('Neither side of a card can be blank.');
+                    else {
+                        this.deckCollection[this.deckIndex].push({'question': this.frontText, 'answer': this.backText});
+                        this.frontText = '';
+                        this.backText = '';
+                    }
+                    localStorage.setItem("deckCollection", JSON.stringify(this.deckCollection));
+                },
+                addDeck() {
+                    this.deckCollection.push([]);
+                    this.deckIndex = this.deckCollection.length - 1;
+                    this.openButtonIndex = this.deckIndex;
+                    localStorage.setItem("deckCollection", JSON.stringify(this.deckCollection));
+                },
+                deleteChecked() {
+                    list = document.getElementById('list-container');
+                    checkboxes = list.getElementsByTagName('input');
+                    for (let i = checkboxes.length-1; i > -1; i--) {
+                        if (checkboxes[i].checked == true) {
+                            checkboxes[i].checked = false;
+                            this.deckCollection[this.deckIndex].splice(i, 1);
+                            i=checkboxes.length-1;;
+                        }
+                    }
+                    localStorage.setItem("deckCollection", JSON.stringify(this.deckCollection));
+                },
+                deleteDeck() {
+                    if (this.deckCollection.length-1 == 0) alert('You cannot delete your only deck.');
+                    else {
+                        this.deckIndex--;
+                        this.deckCollection.splice(this.deckIndex+1, 1);
+                        if (this.deckIndex < 0) this.deckIndex = 0;
+                        this.openButtonIndex = this.deckIndex;
+                    }
+                    localStorage.setItem("deckCollection", JSON.stringify(this.deckCollection));
+                },
+                shuffle() {
+                    if (this.deckCollection[this.deckIndex].length === 0) return;
+                    else {
+                        for (let i = this.deckCollection[this.deckIndex].length - 1; i > 0; i--) {
+                            // Generate a random index between 0 and i
+                            const randomIndex = Math.floor(Math.random() * (i + 1));
+                            // Swap elements at randomIndex and i
+                            [this.deckCollection[this.deckIndex][i], this.deckCollection[this.deckIndex][randomIndex]] = [this.deckCollection[this.deckIndex][randomIndex], this.deckCollection[this.deckIndex][i]];
+                        }
+                    }
+                    localStorage.setItem("deckCollection", JSON.stringify(this.deckCollection));
+                }
+            }
+        })
+
+        app.mount('#app')
+    </script>
 </body>
 </html>
