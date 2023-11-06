@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="./CSS/styles.css">
-    <title>Flashcards</title>
+    <title>In a Flash</title>
 </head>
 <body>
     <div id="app">
         <div id='study-mode' v-if="studyMode">
-            <h1>Flashcard App - Study Mode</h1>
+            <h1>In a Flash - Study Mode</h1>
             <div id='container'>
                 <button type="button" id="back-button" v-on:click="back()">&lt;</button>
                 <div id="card" v-on:click="flip()">
@@ -38,13 +38,58 @@
                     <p>{{ i.question }}</p>
                 </template>
             </div>
-            <button type="button" id="delete-button" v-on:click="deleteChecked()">Delete checked cards</button>
-            <button type="button" id='shuffle-button' v-on:click="shuffle()">Shuffle deck</button>
-            <button type='button' id="new-deck-button" v-on:click="addDeck()">Create new deck</button>
-            <button type="button" id="delete-deck-button" @click="deleteDeck()">Delete current deck</button>
+            <div id="buttons">
+                <button type="button" id="delete-button" v-on:click="deleteChecked()">Delete checked cards</button>
+                <button type="button" id='shuffle-button' v-on:click="shuffle()">Shuffle deck</button>
+                <button type='button' id="new-deck-button" v-on:click="addDeck()">Create new deck</button>
+                <button type="button" id="delete-deck-button" @click="deleteDeck()">Delete current deck</button>
+            </div>
+            <button type="button" id="change-mode-button" @click="switchModes()">Change to quiz mode</button>
         </div>
         <div id="quiz-mode" v-else>
-
+            <h1>In a Flash - Quiz Mode</h1>
+            <div id="setup" v-if="quizSetup">
+                <div id="quiz-container">
+                    <h3>Choose a deck to be quizzed on!</h3>
+                    <form v-on:submit.prevent="quizMode()">
+                        <select id="deckSelection">
+                            <option v-for="(i, index) in deckCollection" :value="index">Deck {{index+1}}</option>
+                        </select>
+                        <input type="submit" value="Quiz me!"></input>
+                    </form>
+                </div>
+            </div>
+            <div id="quiz" v-else>
+                <div id="container">
+                    <div id="card" v-if="!quizFinished && !answered">
+                        <p v-if="deckCollection[deckIndex].length == 0">{{ noCards.question }}</p>
+                        <p v-else-if="cardSide == 'question'">{{ deckCollection[deckIndex][index].question }}</p>
+                        <p v-else-if="cardSide == 'answer'">{{ deckCollection[deckIndex][index].answer }}</p>
+                    </div>
+                    <div id="feedback" v-else>
+                        <p v-if="answered && correct">Correct! Current score: {{ score }}</p>
+                        <div id="wrong-answer" v-else-if="answered && !correct">
+                            <p>Wrong! Current score: {{ score }}</p>
+                            <p>Correct answer: <span class='correct'>{{ deckCollection[deckIndex][index].answer }}</span></p>
+                            <p>Your answer: <span class='wrong'>{{ userAnswer }}</span></p>
+                        </div>
+                        <p v-if="quizFinished">You scored {{ score }} out of {{ deckCollection[deckIndex].length }}!</p>
+                    </div>
+                </div>
+                <div id="input-container">
+                    <form v-on:submit.prevent="flip()">
+                        <input type="text" id="answer" v-model="userAnswer">
+                        <input type="submit" value="Submit answer" :disabled="answered || quizFinished">
+                    </form>
+                    <button type="button" @click="next()" v-if="answered" :disabled="quizFinished">Next</button>
+                </div>
+                <div id="buttons">
+                    <button type="button" id="change-mode-button" @click="switchModes()">Change to study mode</button>
+                </div>
+            </div>
+            <div id="buttons">
+                <button type="button" id="change-mode-button" @click="switchModes()">Change to study mode</button>
+            </div>
         </div>
     </div>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -52,7 +97,12 @@
         const app = Vue.createApp({
             data() {
                 return {
-                    studyMode: 'true',
+                    studyMode: true,
+                    quizSetup: true,
+                    answered: false,
+                    quizFinished: false,
+                    correct: false,
+                    score: 0,
                     cardSide: 'question',
                     index: 0,
                     deckIndex: 0,
@@ -60,29 +110,58 @@
                     deckCollection: JSON.parse(localStorage.getItem('deckCollection')) || [[]],
                     noCards: {'question': 'There are currently no cards in your deck. Add one now!', 'answer': 'There are currently no cards in your deck. Add one now!'},
                     frontText: '',
-                    backText: ''
+                    backText: '',
+                    userAnswer: '',
                 }
             },
             methods: {
                 flip() {
-                    if (this.cardSide === 'answer') this.cardSide = 'question';
-                    else if (this.cardSide === 'question') this.cardSide = 'answer';
+                    if (!(this.quizSetup)) {
+                        if (this.cardSide === 'answer') this.cardSide = 'question';
+                        else if (this.cardSide === 'question') this.cardSide = 'answer';
+                        this.answered = true;
+                        if (this.userAnswer.toLowerCase() == this.deckCollection[this.deckIndex][this.index].answer.toLowerCase()) {
+                            this.correct = true;
+                            this.score++;
+                        }
+                    }
+                    else {
+                        if (this.cardSide === 'answer') this.cardSide = 'question';
+                        else if (this.cardSide === 'question') this.cardSide = 'answer';
+                    }
                 },
                 next() {
-                    this.index++;
-                    if (this.index >= this.deckCollection[this.deckIndex].length) this.index = 0;
-                    this.cardSide = 'question';
+                    if (!(this.quizSetup)) {
+                        this.correct = false;
+                        this.answered = false;
+                        this.index++;
+                        if (this.index >= this.deckCollection[this.deckIndex].length) {
+                            this.index = 0;
+                            this.cardSide = 'question';
+                            this.quizFinished = true;
+                        }
+                        else {
+                            this.cardSide = 'question';
+                        }
+                        this.userAnswer = '';
+                    }
+                    else {
+                        this.index++;
+                        if (this.index >= this.deckCollection[this.deckIndex].length) this.index = 0;
+                        this.cardSide = 'question';
+                    }
                 },
                 back() {
                     this.index--;
-                    if (this.index < 0) this.index = this.deckCollection[deckIndex].length-1;
-                    if (this.deckCollection[this.deckIndex].length == 0) this.index = 0;
+                    if (this.index < 0) this.index = this.deckCollection[this.deckIndex].length-1;
+                    else if (this.deckCollection[this.deckIndex].length == 0) this.index = 0;
                     this.cardSide = 'question';
                 },
                 switchDecks(newDeckIndex) {
                     this.deckIndex = newDeckIndex;
                     this.openButtonIndex = newDeckIndex;
                     this.index = 0;
+                    this.cardSide = 'question';
                 },
                 addCard() {
                     if (this.frontText == '' || this.backText == '') alert('Neither side of a card can be blank.');
@@ -132,7 +211,25 @@
                         }
                     }
                     localStorage.setItem("deckCollection", JSON.stringify(this.deckCollection));
-                }
+                },
+                switchModes() {
+                    this.studyMode = !(this.studyMode);
+                    if (!(this.studyMode)) {
+                        this.quizSetup = true;
+                    }
+                    this.quizFinished = false;
+                    this.score = 0;
+                    this.switchDecks(0);
+                },
+                quizMode() {
+                    let choice = document.getElementById('deckSelection');
+                    if (this.deckCollection[choice.value].length <= 0) alert('You cannot quiz yourself on an empty deck.')
+                    else {
+                        let score = 0;
+                        this.quizSetup = false;
+                        this.deckIndex = choice.value;
+                    }
+                },
             }
         })
 
