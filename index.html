@@ -8,45 +8,51 @@
 </head>
 <body>
     <div id="app">
-    <h1>Flashcard App</h1>
-    <div id='container'>
-        <button type="button" id="back-button" v-on:click="back()">&lt;</button>
-        <div id="card" v-on:click="flip()">
-            <p v-if="deckCollection[deckIndex].length == 0">{{ noCards.question }}</p>
-            <p v-else-if="cardSide == 'question'">{{ deckCollection[deckIndex][index].question }}</p>
-            <p v-else-if="cardSide == 'answer'">{{ deckCollection[deckIndex][index].answer }}</p>
+        <div id='study-mode' v-if="studyMode">
+            <h1>Flashcard App - Study Mode</h1>
+            <div id='container'>
+                <button type="button" id="back-button" v-on:click="back()">&lt;</button>
+                <div id="card" v-on:click="flip()">
+                    <p v-if="deckCollection[deckIndex].length == 0">{{ noCards.question }}</p>
+                    <p v-else-if="cardSide == 'question'">{{ deckCollection[deckIndex][index].question }}</p>
+                    <p v-else-if="cardSide == 'answer'">{{ deckCollection[deckIndex][index].answer }}</p>
+                </div>
+                <button type="button" id="next-button" v-on:click="next()">&gt;</button>
+            </div>
+            <div id="input-container">
+                <form id="card-maker" v-on:submit.prevent="addCard()">
+                    <label for="front-text">Front Text</label>
+                    <input type="text" id="front-text" v-model="frontText">
+                    <label for="back-text">Back Text</label>
+                    <input type="text" id="back-text" v-model="backText">
+                    <button type="submit" id="submit-button">Add card</button>
+                </form>
+            </div>
+            <h3>Deck {{ deckIndex+1 }}</h3>
+            <div id="tabs">
+                <button v-for="(i, index) in deckCollection" class="tab" :key="index" v-on:click="switchDecks(index)" :class="{'open': openButtonIndex == index}">Deck {{ index+1 }}</button>
+            </div>
+            <div id="list-container">
+                <template v-for="(i, index) in deckCollection[deckIndex]" :key ='index'>
+                    <input type="checkbox"></input>
+                    <p>{{ i.question }}</p>
+                </template>
+            </div>
+            <button type="button" id="delete-button" v-on:click="deleteChecked()">Delete checked cards</button>
+            <button type="button" id='shuffle-button' v-on:click="shuffle()">Shuffle deck</button>
+            <button type='button' id="new-deck-button" v-on:click="addDeck()">Create new deck</button>
+            <button type="button" id="delete-deck-button" @click="deleteDeck()">Delete current deck</button>
         </div>
-        <button type="button" id="next-button" v-on:click="next()">&gt;</button>
-    </div>
-    <div id="input-container">
-        <form id="card-maker" v-on:submit.prevent="addCard()">
-            <label for="front-text">Front Text</label>
-            <input type="text" id="front-text" v-model="frontText">
-            <label for="back-text">Back Text</label>
-            <input type="text" id="back-text" v-model="backText">
-            <button type="submit" id="submit-button">Add card</button>
-        </form>
-    </div>
-    <h3>Deck {{ deckIndex+1 }}</h3>
-    <div id="tabs">
-        <button v-for="(i, index) in deckCollection" class="tab" :key="index" v-on:click="switchDecks(index)" :class="{'open': openButtonIndex == index}">Deck {{ index+1 }}</button>
-    </div>
-    <div id="list-container">
-        <template v-for="(i, index) in deckCollection[deckIndex]" :key ='index'>
-            <input type="checkbox"></input>
-            <p>{{ i.question }}</p>
-        </template>
-    </div>
-    <button type="button" id="delete-button" v-on:click="deleteChecked()">Delete checked cards</button>
-    <button type="button" id='shuffle-button' v-on:click="shuffle()">Shuffle deck</button>
-    <button type='button' id="new-deck-button" v-on:click="addDeck()">Create new deck</button>
-    <button type="button" id="delete-deck-button" @click="deleteDeck()">Delete current deck</button>
+        <div id="quiz-mode" v-else>
+
+        </div>
     </div>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script>
         const app = Vue.createApp({
             data() {
                 return {
+                    studyMode: 'true',
                     cardSide: 'question',
                     index: 0,
                     deckIndex: 0,
