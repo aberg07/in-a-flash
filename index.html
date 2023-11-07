@@ -12,10 +12,9 @@
             <h1>In a Flash - Study Mode</h1>
             <div id='container'>
                 <button type="button" id="back-button" v-on:click="back()">&lt;</button>
-                <div id="card" v-on:click="flip()">
+                <div id="card" v-on:click="flip()" :class=" { active:isActive }">
                     <p v-if="deckCollection[deckIndex].length == 0">{{ noCards.question }}</p>
-                    <p v-else-if="cardSide == 'question'">{{ deckCollection[deckIndex][index].question }}</p>
-                    <p v-else-if="cardSide == 'answer'">{{ deckCollection[deckIndex][index].answer }}</p>
+                    <p v-else>{{ getContent() }}</p>
                 </div>
                 <button type="button" id="next-button" v-on:click="next()">&gt;</button>
             </div>
@@ -99,6 +98,8 @@
                 return {
                     studyMode: true,
                     quizSetup: true,
+                    isActive: false,
+                    isAnimated: false,
                     answered: false,
                     quizFinished: false,
                     correct: false,
@@ -116,19 +117,32 @@
             },
             methods: {
                 flip() {
+                    //This if-else block enables the flipping animation in study mode, and disables it in quiz mode.
                     if (!(this.quizSetup)) {
-                        if (this.cardSide === 'answer') this.cardSide = 'question';
-                        else if (this.cardSide === 'question') this.cardSide = 'answer';
                         this.answered = true;
-                        if (this.userAnswer.toLowerCase() == this.deckCollection[this.deckIndex][this.index].answer.toLowerCase()) {
+                        if (this.userAnswer.toLowerCase().trim() == this.deckCollection[this.deckIndex][this.index].answer.toLowerCase().trim()) {
                             this.correct = true;
                             this.score++;
                         }
                     }
                     else {
-                        if (this.cardSide === 'answer') this.cardSide = 'question';
-                        else if (this.cardSide === 'question') this.cardSide = 'answer';
+                        //I check isAnimated to prevent the user from clicking the card to flip it while the animation is still playing
+                        if (this.isAnimated == false) {
+                            this.isAnimated = true;
+                            this.isActive = true;
+                            setTimeout(() => {
+                                if (this.cardSide === 'answer') this.cardSide = 'question';
+                                else if (this.cardSide === 'question') this.cardSide = 'answer';
+                            }, 600)
+                            setTimeout(() => this.isActive = false, 2000);
+                            setTimeout(() => this.isAnimated = false, 2000);
+                        }
                     }
+                },
+                //getContent() exists because Vue seemed to be unable to dynamically update {{deckCollection[deckIndex][index].cardSide}} in HTML, and using v-if interferes with the animation.
+                getContent() {
+                        if (this.cardSide === 'question') return this.deckCollection[this.deckIndex][this.index].question;
+                        else return this.deckCollection[this.deckIndex][this.index].answer;
                 },
                 next() {
                     if (!(this.quizSetup)) {
@@ -216,6 +230,9 @@
                     this.studyMode = !(this.studyMode);
                     if (!(this.studyMode)) {
                         this.quizSetup = true;
+                    }
+                    else {
+                        this.quizSetup = false;
                     }
                     this.quizFinished = false;
                     this.score = 0;
