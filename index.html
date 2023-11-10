@@ -74,8 +74,7 @@
                 <div id="container">
                     <!--Quiz hasn't finished and user hasn't answered-->
                     <div id="card" v-if="!quizFinished && !answered">
-                        <p v-if="deckCollection[deckIndex].length == 0">{{ noCards.question }}</p>
-                        <p v-else-if="cardSide == 'question'">{{ deckCollection[deckIndex][index].question }}</p>
+                        <p v-if="cardSide == 'question'">{{ deckCollection[deckIndex][index].question }}</p>
                         <p v-else-if="cardSide == 'answer'">{{ deckCollection[deckIndex][index].answer }}</p>
                     </div>
                     <!--User has answered but quiz hasn't finished-->
@@ -165,8 +164,14 @@
                 },
                 //getContent() exists because Vue seemed to be unable to dynamically update {{deckCollection[deckIndex][index].cardSide}} in HTML, and using v-if interferes with the animation.
                 getContent() {
+                    if (this.deckCollection[this.deckIndex].length == 0) {
+                        if (this.cardSide === 'question') return this.noCards.answer;
+                        else return this.noCards.question;
+                    }
+                    else {
                         if (this.cardSide === 'question') return this.deckCollection[this.deckIndex][this.index].question;
                         else return this.deckCollection[this.deckIndex][this.index].answer;
+                    }
                 },
                 next() {
                     //If we are not setting up the quiz - i.e. if we are in quiz mode
