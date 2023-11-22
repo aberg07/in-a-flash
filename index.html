@@ -12,13 +12,13 @@
         <div id='study-mode' v-if="studyMode">
             <h1>In a Flash - Study Mode</h1>
             <div id='container'>
-                <button type="button" id="back-button" v-on:click="back()">&lt;</button>
+                <button type="button" id="back-button" v-on:click="back()" :disabled="isActive">&lt;</button>
                 <!--V-bind the 'active' class to 'isActive' boolean to play flipping animation-->
                 <div id="card" v-on:click="flip()" :class=" { active:isActive }">
                     <p v-if="deckCollection[deckIndex].length == 0">{{ noCards.question }}</p>
                     <p v-else>{{ getContent() }}</p>
                 </div>
-                <button type="button" id="next-button" v-on:click="next()">&gt;</button>
+                <button type="button" id="next-button" v-on:click="next()" :disabled="isActive">&gt;</button>
             </div>
             <div id="input-container">
                 <!--Prevent default submit behaviour on forms with '.prevent'-->
@@ -31,15 +31,15 @@
                 </form>
             </div>
             <!--Adding 1 to the index to display which deck the user is on-->
-            <h3>Deck {{ deckIndex+1 }}</h3>
+            <h3>{{ deckCollection[deckIndex].deck_name }}</h3>
             <div id="tabs">
                 <!--Make a tab for each deck, v-bind the 'open' class to change its style and make the open
                 tab stand out-->
-                <button v-for="(i, index) in deckCollection" class="tab" :key="index" v-on:click="switchDecks(index)" :class="{'open': openButtonIndex == index}">Deck {{ index+1 }}</button>
+                <button v-for="(i, index) in getDeckNames" class="tab" :key="index" v-on:click="switchDecks(index)" :class="{'open': openButtonIndex == index}">{{ getDeckNames[index] }}</button>
             </div>
             <div id="list-container">
                 <!--For each card in the deck, display the question and a checkbox in the list-->
-                <template v-for="(i, index) in deckCollection[deckIndex]" :key ='index'>
+                <template v-for="(i, index) in getDeckContent(deckIndex)" :key ='index'>
                     <input type="checkbox"></input>
                     <p>{{ i.question }}</p>
                 </template>
@@ -49,6 +49,7 @@
                 <button type="button" id='shuffle-button' @click="shuffle()">Shuffle deck</button>
                 <button type='button' id="new-deck-button" @click="addDeck()">Create new deck</button>
                 <button type="button" id="delete-deck-button" @click="deleteDeck()">Delete current deck</button>
+                <button type="button" id="rename-deck-button" @click="renameDeck()">Rename current deck</button>
             </div>
             <button type="button" id="change-mode-button" @click="switchModes()">Change to quiz mode</button>
         </div>
@@ -63,7 +64,7 @@
                     <!--Create drop down menu with options for each deck, using the index to name them-->
                     <form v-on:submit.prevent="quizMode()">
                         <select id="deckSelection">
-                            <option v-for="(i, index) in deckCollection" :value="index">Deck {{index+1}}</option>
+                            <option v-for="(i, index) in getDeckNames" :value="index">{{ getDeckNames[index]}}</option>
                         </select>
                         <input type="submit" value="Quiz me!"></input>
                     </form>
@@ -74,8 +75,8 @@
                 <div id="container">
                     <!--Quiz hasn't finished and user hasn't answered-->
                     <div id="card" v-if="!quizFinished && !answered">
-                        <p v-if="cardSide == 'question'">{{ deckCollection[deckIndex][index].question }}</p>
-                        <p v-else-if="cardSide == 'answer'">{{ deckCollection[deckIndex][index].answer }}</p>
+                        <p v-if="cardSide == 'question'">{{ getDeckContent(deckIndex)[index].question }}</p>
+                        <p v-else-if="cardSide == 'answer'">{{ getDeckContent(deckIndex)[index].answer }}</p>
                     </div>
                     <!--User has answered but quiz hasn't finished-->
                     <div id="feedback" v-else>
@@ -84,11 +85,11 @@
                         <!--User's answer is incorrect, compare correct answer to user's answer-->
                         <div id="wrong-answer" v-else-if="answered && !correct">
                             <p>Wrong! Current score: {{ score }}</p>
-                            <p>Correct answer: <span class='correct'>{{ deckCollection[deckIndex][index].answer }}</span></p>
+                            <p>Correct answer: <span class='correct'>{{ getDeckContent(deckIndex)[index].answer }}</span></p>
                             <p>Your answer: <span class='wrong'>{{ userAnswer }}</span></p>
                         </div>
                         <!--Quiz has finished, displays final score-->
-                        <p v-if="quizFinished">You scored {{ score }} out of {{ deckCollection[deckIndex].length }}!</p>
+                        <p v-if="quizFinished">You scored {{ score }} out of {{ getDeckContent(deckIndex).length }}!</p>
                     </div>
                 </div>
                 <div id="input-container">
@@ -129,12 +130,21 @@
                     deckIndex: 0,
                     openButtonIndex: 0,
                     //If there are no decks in local storage (i.e. first time user) deckCollection is empty
-                    deckCollection: JSON.parse(localStorage.getItem('deckCollection')) || [[]],
+                    deckCollection: JSON.parse(localStorage.getItem('deckCollection')) || [{'deck_name': "Deck 1", 'deck_content': []}],
                     //Special deck with same text on both sides to let user know they are in an empty deck
                     noCards: {'question': 'There are currently no cards in your deck. Add one now!', 'answer': 'There are currently no cards in your deck. Add one now!'},
                     frontText: '',
                     backText: '',
-                    userAnswer: '',
+                    userAnswer: ''
+                }
+            },
+            computed: {
+                getDeckNames() {
+                    deckNames = [];
+                    for (let i = 0; i < this.deckCollection.length; i++) {
+                        deckNames.push(this.deckCollection[i].deck_name);
+                    }
+                    return deckNames;
                 }
             },
             methods: {
@@ -143,7 +153,7 @@
                     //If we are not setting up the quiz - i.e. if we are in quiz mode
                     if (!(this.quizSetup)) {
                         this.answered = true;
-                        if (this.userAnswer.toLowerCase().trim() == this.deckCollection[this.deckIndex][this.index].answer.toLowerCase().trim()) {
+                        if (this.userAnswer.toLowerCase().trim() == this.getDeckContent(this.deckIndex)[this.index].answer.toLowerCase().trim()) {
                             this.correct = true;
                             this.score++;
                         }
@@ -164,14 +174,17 @@
                 },
                 //getContent() exists because Vue seemed to be unable to dynamically update {{deckCollection[deckIndex][index].cardSide}} in HTML, and using v-if interferes with the animation.
                 getContent() {
-                    if (this.deckCollection[this.deckIndex].length == 0) {
+                    if (this.getDeckContent(this.deckIndex).length == 0) {
                         if (this.cardSide === 'question') return this.noCards.answer;
                         else return this.noCards.question;
                     }
                     else {
-                        if (this.cardSide === 'question') return this.deckCollection[this.deckIndex][this.index].question;
-                        else return this.deckCollection[this.deckIndex][this.index].answer;
+                        if (this.cardSide === 'question') return this.getDeckContent(this.deckIndex)[this.index].question;
+                        else return this.getDeckContent(this.deckIndex)[this.index].answer;
                     }
+                },
+                getDeckContent(index) {
+                    return this.deckCollection[index].deck_content;
                 },
                 next() {
                     //If we are not setting up the quiz - i.e. if we are in quiz mode
@@ -181,7 +194,7 @@
                         this.answered = false;
                         this.index++;
                         //Quiz has finished if we've reached the end of the deck. Reset index to 0 to prevent odd behaviours when user returns to study mode
-                        if (this.index >= this.deckCollection[this.deckIndex].length) {
+                        if (this.index >= this.getDeckContent(this.deckIndex).length) {
                             this.index = 0;
                             this.quizFinished = true;
                         }
@@ -194,7 +207,7 @@
                     else {
                         this.index++;
                         //Go back to the start of the deck if user clicks next button on the last card
-                        if (this.index >= this.deckCollection[this.deckIndex].length) this.index = 0;
+                        if (this.index >= this.getDeckContent(this.deckIndex).length) this.index = 0;
                         //Flip the card back to the question side
                         this.cardSide = 'question';
                     }
@@ -202,9 +215,9 @@
                 back() {
                     this.index--;
                     //Go to the end of the deck if user clicks back button on the last card
-                    if (this.index < 0) this.index = this.deckCollection[this.deckIndex].length-1;
+                    if (this.index < 0) this.index = this.getDeckContent(this.deckIndex).length-1;
                     //Index will always be 0 if user clicks back button on empty deck to prevent errors
-                    else if (this.deckCollection[this.deckIndex].length == 0) this.index = 0;
+                    else if (this.getDeckContent(this.deckIndex).length == 0) this.index = 0;
                     //Flip card to question side
                     this.cardSide = 'question';
                 },
@@ -221,7 +234,7 @@
                     if (this.frontText == '' || this.backText == '') alert('Neither side of a card can be blank.');
                     //Add front and back text to question and answer sides respectively, reset user input
                     else {
-                        this.deckCollection[this.deckIndex].push({'question': this.frontText, 'answer': this.backText});
+                        this.getDeckContent(this.deckIndex).push({'question': this.frontText, 'answer': this.backText});
                         this.frontText = '';
                         this.backText = '';
                     }
@@ -230,10 +243,8 @@
                 },
                 addDeck() {
                     //Add empty array to deckCollection for a new empty deck
-                    this.deckCollection.push([]);
-                    //Automatically move to the newly created deck
-                    this.deckIndex = this.deckCollection.length - 1;
-                    this.openButtonIndex = this.deckIndex;
+                    this.deckCollection.push({"deck_name": "Deck " + String(this.deckCollection.length+1), "deck_content": []});
+                    console.log(this.deckCollection);
                     //Save decks to local storage
                     localStorage.setItem("deckCollection", JSON.stringify(this.deckCollection));
                 },
@@ -245,7 +256,7 @@
                     for (let i = checkboxes.length-1; i > -1; i--) {
                         if (checkboxes[i].checked == true) {
                             checkboxes[i].checked = false;
-                            this.deckCollection[this.deckIndex].splice(i, 1);
+                            this.getDeckContent(this.deckIndex).splice(i, 1);
                             //Go back to the end to prevent skipping cards due to index shifting
                             i = checkboxes.length-1;
                         }
@@ -268,15 +279,20 @@
                     //Save decks to local storage
                     localStorage.setItem("deckCollection", JSON.stringify(this.deckCollection));
                 },
+                renameDeck() {
+                    let newName = prompt("Please enter a new name for the deck.");
+                    if (newName == "") alert("A deck's name cannot be empty.");
+                    else this.deckCollection[this.deckIndex]["deck_name"] = newName;
+                },
                 shuffle() {
                     //Shuffling an empty deck does nothing
-                    if (this.deckCollection[this.deckIndex].length === 0) return;
+                    if (this.getDeckContent(this.deckIndex).length === 0) return;
                     else {
-                        for (let i = this.deckCollection[this.deckIndex].length - 1; i > 0; i--) {
+                        for (let i = this.getDeckContent(this.deckIndex).length - 1; i > 0; i--) {
                             // Generate a random index between 0 and i
                             const randomIndex = Math.floor(Math.random() * (i + 1));
                             // Swap elements at randomIndex and i
-                            [this.deckCollection[this.deckIndex][i], this.deckCollection[this.deckIndex][randomIndex]] = [this.deckCollection[this.deckIndex][randomIndex], this.deckCollection[this.deckIndex][i]];
+                            [this.getDeckContent(this.deckIndex)[i], this.getDeckContent(this.deckIndex)[randomIndex]] = [this.getDeckContent(this.deckIndex)[randomIndex], this.getDeckContent(this.deckIndex)[i]];
                         }
                     }
                     //Save decks to local storage
@@ -286,7 +302,7 @@
                     //Switch studyMode between true or false (user either is or isn't in study mode)
                     this.studyMode = !(this.studyMode);
                     //If we're not in study mode, we're in quiz mode, so go to setup
-                    if (!(this.studyMode)) this.quizSetup = true;
+                    if (this.studyMode) this.quizSetup = true;
                     else this.quizSetup = false;
                     //Reset all quiz mode variables to prevent odd behaviour when switching modes mid-quiz
                     this.quizFinished = false;
@@ -300,7 +316,7 @@
                     //Get the deck user chose
                     let choice = document.getElementById('deckSelection');
                     //Prevent user from picking an empty deck for the quiz
-                    if (this.deckCollection[choice.value].length <= 0) alert('You cannot quiz yourself on an empty deck.')
+                    if (this.getDeckContent(choice.value).length <= 0) alert('You cannot quiz yourself on an empty deck.')
                     else {
                         let score = 0;
                         this.quizSetup = false;
