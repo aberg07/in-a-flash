@@ -302,7 +302,7 @@
                     //Switch studyMode between true or false (user either is or isn't in study mode)
                     this.studyMode = !(this.studyMode);
                     //If we're not in study mode, we're in quiz mode, so go to setup
-                    if (this.studyMode) this.quizSetup = true;
+                    if (!this.studyMode) this.quizSetup = true;
                     else this.quizSetup = false;
                     //Reset all quiz mode variables to prevent odd behaviour when switching modes mid-quiz
                     this.quizFinished = false;
