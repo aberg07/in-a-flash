@@ -1,18 +1,19 @@
-# Vue 3 + TypeScript + Vite
+# In a Flash
 
-This template should help get you started developing with Vue 3 and TypeScript in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+In a Flash is a flashcard app built with Vue and Bootstrap. Current features include:
+- Creating multiple flashcard decks
+- Using your browser's local storage to save the flashcards you have made
+- A quiz minigame using flashcards you have made
 
-## Recommended IDE Setup
+## Updates
+2024-01-21: This was a major design and structural overhaul I've been working on steadily over the past 2 weeks using what I've learned on my own and with FreeCodeCamp's curriculum. The update includes:
+- Responsive design, allowing for a much cleaner display on mobile
+- Ability to delete individual cards in addition to being able to delete multiple cards at once
+- The renaming and deleting deck functions have been moved and can be accessed from each deck's tab. The previous rename/delete deck buttons would only work on the user's current deck.
+- New flashcard animations
 
-- [VS Code](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur) + [TypeScript Vue Plugin (Volar)](https://marketplace.visualstudio.com/items?itemName=Vue.vscode-typescript-vue-plugin).
+Also a major improvement over the previous version is its use of Vue SFCs - the previous version existed in one big HTML file using the Vue CDN. I'm happy to say this project's code is now much cleaner than the last version's!
 
-## Type Support For `.vue` Imports in TS
-
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [TypeScript Vue Plugin (Volar)](https://marketplace.visualstudio.com/items?itemName=Vue.vscode-typescript-vue-plugin) to make the TypeScript language service aware of `.vue` types.
-
-If the standalone TypeScript plugin doesn't feel fast enough to you, Volar has also implemented a [Take Over Mode](https://github.com/johnsoncodehk/volar/discussions/471#discussioncomment-1361669) that is more performant. You can enable it by the following steps:
-
-1. Disable the built-in TypeScript Extension
-   1. Run `Extensions: Show Built-in Extensions` from VSCode's command palette
-   2. Find `TypeScript and JavaScript Language Features`, right click and select `Disable (Workspace)`
-2. Reload the VSCode window by running `Developer: Reload Window` from the command palette.
+### Planned features
+- Switching the app's language (I am planning to introduce Spanish and Japanese for the time being, as they are the only other languages I can speak fluently)
+- Transition to a full stack web app using databases and user authentication for flashcard storage
