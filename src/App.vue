@@ -9,9 +9,6 @@ provide('deckCollection', deckCollection.value);
 </script>
 
 <template>
-  <div id="header">
-    <h2>eLibrary</h2>
-  </div>
   <router-view></router-view>
 </template>
 
